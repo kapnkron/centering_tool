@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Card Centering Tool</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <h1>Card Centering Tool</h1>
+            <p>Measure border variance from a scanned or photographed trading card.</p>
+          </div>
+          <label class="upload-button">
+            <input id="imageInput" type="file" accept="image/*">
+            <span>Upload Image</span>
+          </label>
+        </header>
+
+        <div class="stage-wrap">
+          <video id="microscopeVideo" playsinline muted></video>
+          <canvas id="cardCanvas" width="1200" height="800" aria-label="Card measurement canvas"></canvas>
+          <div id="emptyState" class="empty-state">
+            <strong>Drop in a card image</strong>
+            <span>Use a flat scan or straight-on photo for the most reliable measurements.</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <section class="panel-section">
+          <h2>Microscope</h2>
+          <div class="control-row">
+            <button id="startMicroscopeButton" type="button">Start Camera</button>
+            <button id="stopMicroscopeButton" class="secondary" type="button">Stop</button>
+          </div>
+          <label>
+            Camera
+            <select id="cameraSelect">
+              <option value="">Default camera</option>
+            </select>
+          </label>
+          <label>
+            Surface filter
+            <select id="filterSelect">
+              <option value="normal">Normal</option>
+              <option value="contrast">High contrast grayscale</option>
+              <option value="edges">Scratch edges</option>
+              <option value="emboss">Relief / divots</option>
+              <option value="invert">Invert highlights</option>
+            </select>
+          </label>
+          <label>
+            Filter strength
+            <input id="filterStrengthControl" type="range" min="1" max="5" value="3" step="1">
+          </label>
+          <div class="control-row">
+            <button id="freezeButton" type="button">Freeze</button>
+            <button id="snapshotButton" type="button">Snapshot</button>
+          </div>
+          <p id="microscopeStatus" class="hint">Use angled light and move the card slowly under the lens.</p>
+          <div id="snapshotStrip" class="snapshot-strip" aria-label="Microscope snapshots"></div>
+        </section>
+
+        <section class="panel-section">
+          <h2>Perspective</h2>
+          <div class="control-row">
+            <button id="cornerModeButton" type="button">Set Corners</button>
+            <button id="applyPerspectiveButton" type="button">Flatten Card</button>
+          </div>
+          <button id="originalButton" class="wide-button secondary" type="button">Use Original Photo</button>
+          <label class="toggle-row">
+            <input id="standardRatioToggle" type="checkbox" checked>
+            <span>Flatten to standard card ratio</span>
+          </label>
+          <p id="modeHint" class="hint">For angled photos, set the four physical card corners first.</p>
+        </section>
+
+        <section class="panel-section">
+          <h2>Guides</h2>
+          <div class="control-row">
+            <button id="detectButton" type="button">Auto Detect</button>
+            <button id="resetButton" type="button">Reset Guides</button>
+          </div>
+          <label class="toggle-row">
+            <input id="snapToggle" type="checkbox" checked>
+            <span>Snap guides to detected edges</span>
+          </label>
+          <p class="hint">Drag the outer guide to the card edge, then drag the inner guide to the printed image or design window.</p>
+        </section>
+
+        <section class="panel-section">
+          <h2>Measurements</h2>
+          <dl class="metrics">
+            <div>
+              <dt>Left</dt>
+              <dd id="leftMetric">--</dd>
+            </div>
+            <div>
+              <dt>Right</dt>
+              <dd id="rightMetric">--</dd>
+            </div>
+            <div>
+              <dt>Top</dt>
+              <dd id="topMetric">--</dd>
+            </div>
+            <div>
+              <dt>Bottom</dt>
+              <dd id="bottomMetric">--</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="panel-section">
+          <h2>Centering</h2>
+          <div class="score-row">
+            <span>Left / Right</span>
+            <strong id="horizontalScore">--</strong>
+          </div>
+          <div class="meter">
+            <span id="horizontalMeter"></span>
+          </div>
+          <div class="score-row">
+            <span>Top / Bottom</span>
+            <strong id="verticalScore">--</strong>
+          </div>
+          <div class="meter">
+            <span id="verticalMeter"></span>
+          </div>
+          <p id="gradeHint" class="grade-hint">Upload an image to begin.</p>
+        </section>
+
+        <section class="panel-section">
+          <h2>Fine Tune</h2>
+          <label>
+            <span class="label-row">
+              <span>Zoom</span>
+              <strong id="zoomValue">100%</strong>
+            </span>
+            <input id="zoomControl" type="range" min="0.5" max="12" value="1" step="0.1">
+          </label>
+          <label>
+            Edge sensitivity
+            <input id="thresholdControl" type="range" min="10" max="90" value="42" step="1">
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h2>Nudge Printed Area</h2>
+          <label>
+            Step size
+            <select id="stepControl">
+              <option value="1">1 px</option>
+              <option value="2">2 px</option>
+              <option value="5" selected>5 px</option>
+              <option value="10">10 px</option>
+            </select>
+          </label>
+          <div class="nudge-grid" aria-label="Nudge printed area edges">
+            <span>Left edge</span>
+            <button type="button" data-nudge-edge="left" data-nudge-direction="-1">←</button>
+            <button type="button" data-nudge-edge="left" data-nudge-direction="1">→</button>
+            <span>Right edge</span>
+            <button type="button" data-nudge-edge="right" data-nudge-direction="-1">←</button>
+            <button type="button" data-nudge-edge="right" data-nudge-direction="1">→</button>
+            <span>Top edge</span>
+            <button type="button" data-nudge-edge="top" data-nudge-direction="-1">↑</button>
+            <button type="button" data-nudge-edge="top" data-nudge-direction="1">↓</button>
+            <span>Bottom edge</span>
+            <button type="button" data-nudge-edge="bottom" data-nudge-direction="-1">↑</button>
+            <button type="button" data-nudge-edge="bottom" data-nudge-direction="1">↓</button>
+          </div>
+          <p class="hint">Use these for exact edge movement after zooming in.</p>
+        </section>
+
+        <section class="panel-section">
+          <h2>Report</h2>
+          <textarea id="reportText" readonly rows="8" spellcheck="false"></textarea>
+          <button id="copyButton" type="button">Copy Report</button>
+        </section>
+      </aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
