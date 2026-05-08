@@ -12,6 +12,7 @@ const filterSelect = document.querySelector("#filterSelect");
 const filterStrengthControl = document.querySelector("#filterStrengthControl");
 const freezeButton = document.querySelector("#freezeButton");
 const snapshotButton = document.querySelector("#snapshotButton");
+const captureCenteringButton = document.querySelector("#captureCenteringButton");
 const microscopeStatus = document.querySelector("#microscopeStatus");
 const snapshotStrip = document.querySelector("#snapshotStrip");
 const detectButton = document.querySelector("#detectButton");
@@ -107,6 +108,11 @@ freezeButton.addEventListener("click", () => {
 snapshotButton.addEventListener("click", () => {
   if (mode !== "microscope") return;
   addMicroscopeSnapshot();
+});
+
+captureCenteringButton.addEventListener("click", () => {
+  if (mode !== "microscope") return;
+  captureCameraForCentering();
 });
 
 stageWrap.addEventListener("dragover", (event) => {
@@ -465,6 +471,40 @@ function addMicroscopeSnapshot() {
   microscopeStatus.textContent = "Snapshot saved below. Click a thumbnail to download it.";
 }
 
+function captureCameraForCentering() {
+  const width = microscopeVideo.videoWidth || canvas.width;
+  const height = microscopeVideo.videoHeight || canvas.height;
+  if (!width || !height) {
+    microscopeStatus.textContent = "Camera frame is not ready yet.";
+    return;
+  }
+
+  const captureCanvas = document.createElement("canvas");
+  captureCanvas.width = width;
+  captureCanvas.height = height;
+  const captureCtx = captureCanvas.getContext("2d");
+  captureCtx.drawImage(microscopeVideo, 0, 0, width, height);
+
+  stopMicroscope(false);
+  originalImage = captureCanvas;
+  sourceImage = captureCanvas;
+  imageName = `Camera capture ${new Date().toLocaleString()}`;
+  perspectiveApplied = false;
+  flattenedCardRect = null;
+  mode = "measure";
+  scale = 1;
+  zoomControl.value = "1";
+  emptyState.style.display = "none";
+  resizeCanvas();
+  updateZoomValue();
+  resetCorners();
+  resetGuides();
+  detectCardAndWindow();
+  setModeHint();
+  draw();
+  microscopeStatus.textContent = "Captured webcam frame for centering. Use Set Corners if the photo is angled.";
+}
+
 function resizeCanvas() {
   if (!sourceImage) return;
   const maxWidth = 1400;
@@ -679,8 +719,8 @@ function draw() {
     drawCornerOverlay();
     return;
   }
-  drawGuide(guides.outer, getComputedStyle(document.documentElement).getPropertyValue("--outer"), "CARD EDGE");
-  drawGuide(guides.inner, getComputedStyle(document.documentElement).getPropertyValue("--inner"), "PRINTED AREA");
+  drawGuide(guides.outer, getComputedStyle(document.documentElement).getPropertyValue("--outer"), "CARD EDGE", false);
+  drawGuide(guides.inner, getComputedStyle(document.documentElement).getPropertyValue("--inner"), "PRINTED AREA", true);
   drawBorderMeasurements();
   updateMetrics();
 }
@@ -694,7 +734,8 @@ function drawBaseImage() {
 
 function drawCornerOverlay() {
   ctx.save();
-  ctx.strokeStyle = "#187c74";
+  const color = "#187c74";
+  ctx.strokeStyle = color;
   ctx.fillStyle = "rgba(24, 124, 116, 0.14)";
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -709,30 +750,97 @@ function drawCornerOverlay() {
   const labels = ["TL", "TR", "BR", "BL"];
   ctx.font = "700 13px system-ui, sans-serif";
   corners.forEach((corner, index) => {
-    ctx.fillStyle = activeCorner === index ? "#0f5d57" : "#187c74";
-    ctx.beginPath();
-    ctx.arc(corner.x, corner.y, 11, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(labels[index], corner.x - 8, corner.y + 5);
+    drawCornerTarget(corner, color, labels[index], index, activeCorner === index);
   });
   ctx.restore();
 }
 
-function drawGuide(rect, color, label) {
+function drawGuide(rect, color, label, showCornerTargets) {
   ctx.save();
-  ctx.strokeStyle = color.trim();
+  const guideColor = color.trim();
+  ctx.strokeStyle = guideColor;
   ctx.lineWidth = 3;
   ctx.setLineDash([10, 6]);
   ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
   ctx.setLineDash([]);
-  ctx.fillStyle = color.trim();
-  for (const handle of handles(rect)) {
-    ctx.fillRect(handle.x - 5, handle.y - 5, 10, 10);
+  if (showCornerTargets) {
+    const labels = { nw: "TL", ne: "TR", se: "BR", sw: "BL" };
+    for (const handle of handles(rect)) {
+      drawCornerTarget(handle, guideColor, labels[handle.name], handle.name, false);
+    }
+  } else {
+    ctx.fillStyle = guideColor;
+    for (const handle of handles(rect)) {
+      drawLHandle(handle, guideColor);
+    }
   }
   ctx.font = "700 12px system-ui, sans-serif";
+  ctx.fillStyle = guideColor;
   ctx.fillText(label, rect.x + 8, rect.y - 8);
   ctx.restore();
+}
+
+function drawCornerTarget(point, color, label, corner, active) {
+  const offset = cornerLabelOffset(corner);
+  const labelX = point.x + offset.x;
+  const labelY = point.y + offset.y;
+
+  ctx.save();
+  ctx.strokeStyle = active ? "#0f5d57" : color;
+  ctx.fillStyle = active ? "#0f5d57" : color;
+  ctx.lineWidth = active ? 3 : 2;
+  ctx.beginPath();
+  ctx.moveTo(point.x - 12, point.y);
+  ctx.lineTo(point.x - 3, point.y);
+  ctx.moveTo(point.x + 3, point.y);
+  ctx.lineTo(point.x + 12, point.y);
+  ctx.moveTo(point.x, point.y - 12);
+  ctx.lineTo(point.x, point.y - 3);
+  ctx.moveTo(point.x, point.y + 3);
+  ctx.lineTo(point.x, point.y + 12);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(point.x, point.y);
+  ctx.lineTo(labelX, labelY);
+  ctx.stroke();
+
+  ctx.fillRect(labelX - 13, labelY - 10, 26, 20);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "700 12px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, labelX, labelY + 1);
+  ctx.restore();
+}
+
+function drawLHandle(point, color) {
+  const size = 16;
+  const directionX = point.name.includes("w") ? 1 : -1;
+  const directionY = point.name.includes("n") ? 1 : -1;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(point.x, point.y + directionY * size);
+  ctx.lineTo(point.x, point.y);
+  ctx.lineTo(point.x + directionX * size, point.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function cornerLabelOffset(corner) {
+  const offsets = {
+    0: { x: -26, y: -26 },
+    1: { x: 26, y: -26 },
+    2: { x: 26, y: 26 },
+    3: { x: -26, y: 26 },
+    nw: { x: -26, y: -26 },
+    ne: { x: 26, y: -26 },
+    se: { x: 26, y: 26 },
+    sw: { x: -26, y: 26 },
+  };
+  return offsets[corner] || { x: 26, y: 26 };
 }
 
 function drawBorderMeasurements() {

@@ -16,6 +16,8 @@ Open `index.html` in a browser. No build step is required.
 - Left/right and top/bottom centering ratios
 - Scrollable visual zoom up to 1200% without changing measurement coordinates
 - Live USB microscope inspection with contrast, edge, relief, and invert filters
+- Top-panel controls for zoom, edge sensitivity, and filter strength
+- Webcam capture for centering snapshots
 - Copyable measurement report
 
 For best results, use a flat scan or a straight-on photo with the full card visible against a contrasting background.
@@ -31,3 +33,7 @@ The green guide should sit on the physical card edge. The red guide should sit o
 Use **Start Camera** to open a USB microscope that appears as a camera. Move the card slowly under the lens and use angled light to reveal surface issues. Try **Scratch edges** for fine lines, **Relief / divots** for shallow dents, and **Invert highlights** for reflective scratches. Use **Freeze** when something appears, then **Snapshot** to save a downloadable inspection image.
 
 Camera access usually requires opening the tool from `localhost` or HTTPS rather than directly from the file system.
+
+## Webcam Centering Capture
+
+Use **Start Camera** with any webcam or USB camera, position the full card in view, then choose **Capture for Centering**. The tool grabs an unfiltered frame and switches back to the normal centering workflow. Use **Set Corners** afterward if the captured frame is angled.

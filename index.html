@@ -57,10 +57,22 @@
             Filter strength
             <input id="filterStrengthControl" type="range" min="1" max="5" value="3" step="1">
           </label>
+          <label>
+            <span class="label-row">
+              <span>Zoom</span>
+              <strong id="zoomValue">100%</strong>
+            </span>
+            <input id="zoomControl" type="range" min="0.5" max="12" value="1" step="0.1">
+          </label>
+          <label>
+            Edge sensitivity
+            <input id="thresholdControl" type="range" min="10" max="90" value="42" step="1">
+          </label>
           <div class="control-row">
             <button id="freezeButton" type="button">Freeze</button>
             <button id="snapshotButton" type="button">Snapshot</button>
           </div>
+          <button id="captureCenteringButton" class="wide-button" type="button">Capture for Centering</button>
           <p id="microscopeStatus" class="hint">Use angled light and move the card slowly under the lens.</p>
           <div id="snapshotStrip" class="snapshot-strip" aria-label="Microscope snapshots"></div>
         </section>
@@ -131,21 +143,6 @@
             <span id="verticalMeter"></span>
           </div>
           <p id="gradeHint" class="grade-hint">Upload an image to begin.</p>
-        </section>
-
-        <section class="panel-section">
-          <h2>Fine Tune</h2>
-          <label>
-            <span class="label-row">
-              <span>Zoom</span>
-              <strong id="zoomValue">100%</strong>
-            </span>
-            <input id="zoomControl" type="range" min="0.5" max="12" value="1" step="0.1">
-          </label>
-          <label>
-            Edge sensitivity
-            <input id="thresholdControl" type="range" min="10" max="90" value="42" step="1">
-          </label>
         </section>
 
         <section class="panel-section">
