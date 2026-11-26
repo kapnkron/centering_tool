@@ -1,0 +1,9 @@
+# TraceLock Vision Sidecar Dependencies
+# Base server runs out-of-the-box with Python 3.12 + numpy + Pillow.
+# Install these in vision/.venv for GPU YOLO11 training & ONNX inference:
+
+numpy>=1.26.0
+Pillow>=10.0.0
+opencv-python-headless>=4.10.0
+ultralytics>=8.3.0
+onnxruntime-gpu>=1.19.0

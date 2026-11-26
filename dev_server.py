@@ -9,7 +9,11 @@ class Handler(SimpleHTTPRequestHandler):
     }
 
 
+class ReusableServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+
+
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("127.0.0.1", 8000), Handler)
-    print("Card Centering Tool running at http://127.0.0.1:8000")
+    server = ReusableServer(("127.0.0.1", 8001), Handler)
+    print("TraceLock Inspection Instrument running at http://127.0.0.1:8001")
     server.serve_forever()

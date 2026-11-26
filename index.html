@@ -1,186 +1,238 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Card Centering Tool</title>
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <main class="app-shell">
-      <section class="workspace">
-        <header class="topbar">
-          <div>
-            <h1>Card Centering Tool</h1>
-            <p>Measure border variance from a scanned or photographed trading card.</p>
-          </div>
-          <label class="upload-button">
-            <input id="imageInput" type="file" accept="image/*">
-            <span>Upload Image</span>
-          </label>
-        </header>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0d10">
+  <title>TraceLock Inspection Instrument</title>
+  <link rel="stylesheet" href="styles.css?v=30">
+</head>
+<body class="drawer-closed">
+  <div class="instrument-shell">
+    <header class="identity-bar">
+      <div class="brand-lockup" aria-label="TraceLock">
+        <span class="wordmark">TRACELOCK</span>
+        <span class="product-descriptor">Forensic Card Inspection</span>
+      </div>
+      <div class="identity-records" aria-label="Current inspection identity">
+        <div><span>Card ID</span><strong id="headerCardId">Unassigned</strong></div>
+        <div><span>Card</span><strong id="headerCardName">No card loaded</strong></div>
+        <div><span>Inspection</span><strong id="headerInspectionId">New session</strong></div>
+      </div>
+      <div class="header-actions">
+        <span class="local-status"><i></i>Local instrument</span>
+        <button id="phoneTransferButton" class="secondary" type="button" hidden>Send from iPhone</button>
+        <button id="sessionsButton" class="secondary" type="button" hidden>Sessions</button>
+        <button id="presentationModeButton" class="presentation-button" type="button" aria-pressed="false">Presentation Mode</button>
+        <button id="saveInspectionButton" class="secondary" type="button">Save inspection</button>
+        <label class="file-action secondary"><input id="resumeInspectionInput" type="file" accept="application/json,.json"><span>Resume inspection</span></label>
+        <label class="file-action open-image-action"><input id="imageInput" type="file" accept="image/*"><span>Open image</span></label>
+      </div>
+    </header>
 
+    <nav class="inspection-rail" aria-label="Inspection sequence">
+      <button class="inspection-step is-active" type="button" data-inspection-step="metadata" data-open-panel="inspect"><span>01</span>Card metadata</button>
+      <button class="inspection-step" type="button" data-inspection-step="centering" data-open-panel="measure"><span>02</span>V-centering</button>
+      <button class="inspection-step" type="button" data-inspection-step="surface" data-open-panel="inspect"><span>03</span>Surface</button>
+      <button class="inspection-step" type="button" data-inspection-step="corners" data-open-panel="inspect"><span>04</span>Corners</button>
+      <button class="inspection-step" type="button" data-inspection-step="edges" data-open-panel="inspect"><span>05</span>Edges</button>
+      <button class="inspection-step" type="button" data-inspection-step="print" data-open-panel="inspect"><span>06</span>Print</button>
+      <button class="inspection-step" type="button" data-inspection-step="uv" data-open-panel="inspect"><span>07</span>UV</button>
+      <button class="inspection-step" type="button" data-inspection-step="security" data-open-panel="inspect"><span>08</span>Security</button>
+      <button class="inspection-step" type="button" data-inspection-step="report" data-open-panel="report"><span>09</span>Report</button>
+      <button id="drawerToggleButton" class="drawer-toggle" type="button" aria-expanded="false">Show controls</button>
+    </nav>
+
+    <section class="guide-bar" aria-label="Guided inspection" aria-live="polite">
+      <div class="guide-copy"><span id="guideProgress">Step 1 of 9</span><strong id="guideTitle">Card metadata</strong><p id="guideInstruction">Enter the card details you know, then continue to V-centering.</p><small id="guideStatus">You can return to this form at any time.</small></div>
+      <div class="guide-actions"><label id="guideSideLabel">Side<select id="guideSideSelect"><option value="front">Front</option><option value="back">Back</option></select></label><button id="guideOpenPhotoButton" class="secondary" type="button" hidden>Open photo</button><button id="guideBackButton" class="secondary" type="button">Back</button><button id="guidePrimaryButton" type="button">Open card photo</button><button id="guideNextButton" class="secondary" type="button">Next</button></div>
+    </section>
+
+    <main class="inspection-stage">
+      <section class="viewport" aria-label="Live card inspection viewport">
+        <div class="feed-status"><span><i id="feedStatusDot"></i><b id="feedStatusText">Ready</b></span><span id="activeRegionLabel">Surface · Full card</span></div>
         <div class="stage-wrap">
+          <form id="cardMetadataForm" class="metadata-start" autocomplete="on">
+            <div class="metadata-intro"><span>01 / Card metadata</span><h1>Tell us which card this is</h1><p>Fill in what you know. Inspection and report IDs are ready for this session and can be edited.</p></div>
+            <div class="metadata-fields">
+              <label>Card ID<input id="cardIdInput" type="text" placeholder="2026-TL-00001"></label>
+              <label>Player<input id="playerInput" type="text" placeholder="Player or subject"></label>
+              <label>Manufacturer<input id="manufacturerInput" type="text" placeholder="Manufacturer"></label>
+              <label>Set<input id="setInput" type="text" placeholder="Set name"></label>
+              <label>Year<input id="yearInput" type="number" min="1800" max="2200" step="1" placeholder="2026"></label>
+              <label>Card number<input id="cardNumberInput" type="text" placeholder="No. 123"></label>
+              <label>Serial number<input id="serialNumberInput" type="text" placeholder="Optional serial / print run"></label>
+              <label>Card identity<input id="cardNameInput" type="text" placeholder="Variant · Parallel · Subject"></label>
+              <label>Inspection ID<input id="inspectionIdInput" type="text" placeholder="Generated for this session"></label>
+              <label>TraceLock report ID<input id="traceLockReportIdInput" type="text" placeholder="Generated for this report"></label>
+            </div>
+            <div class="metadata-footer"><span id="metadataFormHint">Details can be changed later from Card metadata.</span><div class="metadata-footer-actions"><button id="visionAutofillMetadataButton" class="secondary" type="button" hidden>Auto-fill from photo (Vision AI)</button><button id="metadataContinueButton" type="submit">Continue to V-centering</button></div></div>
+          </form>
           <video id="microscopeVideo" playsinline muted></video>
           <canvas id="cardCanvas" width="1200" height="800" aria-label="Card measurement canvas"></canvas>
+          <div id="comparisonWash" class="comparison-wash" hidden aria-hidden="true"></div>
+          <div id="comparisonLine" class="comparison-line" hidden><span>Normal</span><b></b><span id="comparisonModeLabel">UV profile</span></div>
           <div id="emptyState" class="empty-state">
-            <strong>Drop in a card image</strong>
-            <span>Use a flat scan or straight-on photo for the most reliable measurements.</span>
+            <span class="empty-kicker">Inspection viewport ready</span>
+            <strong>Bring the card into focus</strong>
+            <p>Begin v-centering with a straight-on photo of the full card.</p>
+            <div class="empty-actions"><button id="emptyUploadButton" type="button">Open card image</button><button id="emptyCameraButton" class="secondary" type="button">Start microscope</button></div>
           </div>
         </div>
+        <div class="instrument-hud" aria-label="Live instrument values">
+          <div><span>Magnification</span><strong><b id="magnificationReadout">40</b>x</strong></div>
+          <div><span>Calibrated scale</span><strong id="scaleReadout">Not calibrated</strong></div>
+          <div><span>Illumination</span><strong id="illuminationReadout">Normal</strong></div>
+          <div><span>Region</span><strong id="regionReadout">Full card</strong></div>
+          <button id="captureEvidenceButton" type="button">Capture Evidence</button>
+        </div>
+        <footer class="viewport-footer">
+          <p id="modeHint">For angled photos, set the four physical card corners first.</p>
+          <div class="comparison-control"><label><input id="compareToggle" type="checkbox"><span>Comparison</span></label><input id="comparisonDivider" type="range" min="5" max="95" value="50" aria-label="Comparison divider"></div>
+        </footer>
       </section>
 
-      <aside class="panel">
-        <section class="panel-section">
-          <h2>Microscope</h2>
-          <div class="control-row">
-            <button id="startMicroscopeButton" type="button">Start Camera</button>
-            <button id="stopMicroscopeButton" class="secondary" type="button">Stop</button>
+      <aside class="instrument-drawer" aria-label="Instrument controls">
+        <nav class="workflow-tabs" aria-label="Control groups">
+          <button class="workflow-tab is-active" type="button" data-panel-target="inspect">Instrument</button>
+          <button class="workflow-tab" type="button" data-panel-target="measure">Measure</button>
+          <button class="workflow-tab" type="button" data-panel-target="report">Evidence</button>
+          <button class="workflow-tab" type="button" data-panel-target="promote">Output</button>
+        </nav>
+        <div class="panel-scroll">
+          <div class="panel-view is-active" data-panel-view="inspect">
+            <section class="drawer-intro"><span>Live inspection</span><h2>Microscope and capture</h2><p>Control the source, light profile, and repeatable evidence regions.</p></section>
+            <section class="control-section">
+              <div class="section-heading"><h3>Camera source</h3><span id="cameraStateBadge" class="state-pill">Offline</span></div>
+              <div class="button-pair"><button id="startMicroscopeButton" type="button">Start camera</button><button id="stopMicroscopeButton" class="secondary" type="button">Stop</button></div>
+              <label>Camera<select id="cameraSelect"><option value="">Default camera</option></select></label>
+              <label>Capture quality<select id="cameraQualitySelect"><option value="default" selected>Camera default</option><option value="best">Best available</option><option value="1280x720">HD 720p</option><option value="800x600">800 × 600</option><option value="640x480">640 × 480</option></select></label>
+              <p id="microscopeStatus" class="hint">Connect a camera and use angled light to reveal surface detail.</p>
+            </section>
+            <section class="control-section">
+              <div class="section-heading"><h3>Instrument profile</h3></div>
+              <div class="field-grid"><label>Magnification<input id="magnificationInput" type="number" min="1" max="500" value="40"></label><label>Region<select id="regionSelect"><option value="Full card">Full card</option><option value="Corner TL">Corner TL</option><option value="Corner TR">Corner TR</option><option value="Corner BR">Corner BR</option><option value="Corner BL">Corner BL</option><option value="Top edge">Top edge</option><option value="Right edge">Right edge</option><option value="Bottom edge">Bottom edge</option><option value="Left edge">Left edge</option><option value="Surface A">Surface A</option><option value="Surface B">Surface B</option><option value="Security mark">Security mark</option></select></label></div>
+              <label>Illumination profile<select id="illuminationSelect"><option value="normal">Normal</option><option value="angled">Angled</option><option value="uv365">UV 365 nm</option><option value="uv395">UV 395 nm</option><option value="transmitted">Transmitted</option></select></label>
+              <label>Visual filter<select id="filterSelect"><option value="normal">Natural color</option><option value="contrast">High-contrast grayscale</option><option value="edges">Scratch edge detection</option><option value="emboss">Relief and divots</option><option value="invert">Inverted highlights</option><option value="redChannel">Red channel isolation</option><option value="blueChannel">Blue channel isolation</option><option value="threshold">Binary threshold</option></select></label>
+              <label>Filter strength<input id="filterStrengthControl" type="range" min="1" max="5" value="3" step="1"></label>
+              <label>Edge sensitivity<input id="thresholdControl" type="range" min="10" max="90" value="42" step="1"></label>
+              <label>Canvas zoom<input id="zoomControl" type="range" min="0.25" max="12" value="1" step="0.05"><span id="zoomValue" class="range-value">100%</span></label>
+              <label class="switch-row"><input id="loupeToggle" type="checkbox" checked><span><strong>Precision loupe</strong><small>Magnify detail beneath the pointer</small></span></label>
+            </section>
+            <section class="control-section"><div class="button-pair"><button id="freezeButton" type="button">Freeze frame</button><button id="snapshotButton" type="button">Save snapshot</button></div><button id="captureCenteringButton" class="wide secondary" type="button">Use frame for centering</button></section>
+            <section id="cncControlSection" class="control-section" hidden>
+              <div class="section-heading"><h3>CNC Gantry (GRBL)</h3><span id="cncStateBadge" class="state-pill">Offline</span></div>
+              <label>Serial port<select id="cncPortSelect"><option value="SIM://GRBL-GANTRY">Virtual GRBL Simulator (dry-run)</option></select></label>
+              <div class="button-pair"><button id="cncConnectButton" type="button">Connect</button><button id="cncRefreshPortsButton" class="secondary" type="button">Refresh ports</button></div>
+              <div class="button-pair"><button id="cncDisconnectButton" class="secondary" type="button" disabled>Disconnect</button><button id="cncEstopButton" class="estop-button" type="button">E-STOP</button></div>
+              <dl class="metrics cnc-coords"><div><dt>X (mm)</dt><dd id="cncXReadout">0.00</dd></div><div><dt>Y (mm)</dt><dd id="cncYReadout">0.00</dd></div><div><dt>Z (mm)</dt><dd id="cncZReadout">0.00</dd></div><div><dt>Sharp</dt><dd id="cncSharpnessReadout">--</dd></div></dl>
+              <div class="button-pair"><button id="cncHomeButton" class="secondary" type="button" disabled>Home ($H)</button><button id="cncZeroButton" class="secondary" type="button" disabled>Set card X0 Y0</button></div>
+              <div class="button-pair"><button id="cncUnlockButton" class="secondary" type="button" disabled>Unlock ($X)</button><button id="cncAutofocusButton" class="secondary" type="button" disabled>Z Autofocus</button></div>
+              <label>Jog step (mm)<select id="cncJogStepSelect"><option value="0.1">0.1 mm</option><option value="0.5">0.5 mm</option><option value="1" selected>1 mm</option><option value="5">5 mm</option><option value="10">10 mm</option></select></label>
+              <div class="cnc-jog-grid" aria-label="Gantry jog controls">
+                <span></span><button type="button" class="secondary" data-cnc-jog="y:1">Y+</button><span></span><button type="button" class="secondary" data-cnc-jog="z:1">Z+</button>
+                <button type="button" class="secondary" data-cnc-jog="x:-1">X−</button><button type="button" class="secondary" data-cnc-jog="home:0">0,0</button><button type="button" class="secondary" data-cnc-jog="x:1">X+</button><button type="button" class="secondary" data-cnc-jog="z:-1">Z−</button>
+                <span></span><button type="button" class="secondary" data-cnc-jog="y:-1">Y−</button><span></span><span></span>
+              </div>
+              <div class="cnc-scan-box">
+                <div class="field-grid"><label>FOV X (mm)<input id="cncFovXInput" type="number" min="4" max="80" step="0.5" value="14"></label><label>FOV Y (mm)<input id="cncFovYInput" type="number" min="4" max="80" step="0.5" value="10.5"></label></div>
+                <div class="cnc-pass-checks">
+                  <label><input id="cncScanCorners" type="checkbox" checked><span>Corners</span></label>
+                  <label><input id="cncScanEdges" type="checkbox" checked><span>Edges</span></label>
+                  <label><input id="cncScanSurface" type="checkbox" checked><span>Surface</span></label>
+                  <label><input id="cncScanUv" type="checkbox"><span>UV</span></label>
+                  <label><input id="cncScanAutofocus" type="checkbox"><span>Auto-Z</span></label>
+                </div>
+                <div class="button-pair"><button id="cncStartScanButton" type="button" disabled>Start auto scan</button><button id="cncStopScanButton" class="secondary" type="button" disabled>Stop scan</button></div>
+                <div class="meter"><span id="cncScanMeter"></span></div>
+                <p id="cncStatusText" class="hint">Connect a GRBL USB port (or Virtual Simulator) to control the gantry.</p>
+              </div>
+            </section>
+            <section id="visionControlSection" class="control-section" hidden>
+              <div class="section-heading"><h3>Vision AI Detection</h3><span id="visionStateBadge" class="state-pill">Offline</span></div>
+              <label>Local VLM (Ollama)<select id="visionModelSelect"><option value="">None detected (Classical CV only)</option></select></label>
+              <label class="switch-row"><input id="visionVlmTriageToggle" type="checkbox"><span><strong>VLM flaw triage</strong><small>Verify candidates with Ollama to cut artwork false positives</small></span></label>
+              <label class="switch-row"><input id="visionAutoScanToggle" type="checkbox" checked><span><strong>Auto-analyze CNC tiles</strong><small>Flag candidate flaws on each gantry scan capture</small></span></label>
+              <div class="button-pair"><button id="visionScanCurrentButton" type="button">Scan current view</button><button id="visionRefreshButton" class="secondary" type="button">Refresh status</button></div>
+              <div class="button-pair"><button id="visionBuildDatasetButton" class="secondary" type="button">Build YOLO dataset</button><button id="visionReloadModelButton" class="secondary" type="button">Reload model</button></div>
+              <p id="visionStatusText" class="hint">Local Python sidecar uses classical CV immediately, YOLO11 once trained, and Ollama for metadata &amp; triage.</p>
+            </section>
           </div>
-          <label>
-            Camera
-            <select id="cameraSelect">
-              <option value="">Default camera</option>
-            </select>
-          </label>
-          <label>
-            Surface filter
-            <select id="filterSelect">
-              <option value="normal">Normal</option>
-              <option value="contrast">High contrast grayscale</option>
-              <option value="edges">Scratch edges</option>
-              <option value="emboss">Relief / divots</option>
-              <option value="invert">Invert highlights</option>
-            </select>
-          </label>
-          <label>
-            Filter strength
-            <input id="filterStrengthControl" type="range" min="1" max="5" value="3" step="1">
-          </label>
-          <label>
-            <span class="label-row">
-              <span>Zoom</span>
-              <strong id="zoomValue">100%</strong>
-            </span>
-            <input id="zoomControl" type="range" min="0.5" max="12" value="1" step="0.1">
-          </label>
-          <label>
-            Edge sensitivity
-            <input id="thresholdControl" type="range" min="10" max="90" value="42" step="1">
-          </label>
-          <div class="control-row">
-            <button id="freezeButton" type="button">Freeze</button>
-            <button id="snapshotButton" type="button">Snapshot</button>
-          </div>
-          <button id="captureCenteringButton" class="wide-button" type="button">Capture for Centering</button>
-          <p id="microscopeStatus" class="hint">Use angled light and move the card slowly under the lens.</p>
-          <div id="snapshotStrip" class="snapshot-strip" aria-label="Microscope snapshots"></div>
-        </section>
 
-        <section class="panel-section">
-          <h2>Perspective</h2>
-          <div class="control-row">
-            <button id="cornerModeButton" type="button">Set Corners</button>
-            <button id="applyPerspectiveButton" type="button">Flatten Card</button>
+          <div class="panel-view" data-panel-view="measure" hidden>
+            <section class="drawer-intro"><span>Geometry</span><h2>Centering and calibration</h2><p>Correct perspective, align the printed area, and convert pixels to physical units.</p></section>
+            <section class="control-section">
+              <div class="section-heading"><h3>Scale calibration</h3><span id="calibrationBadge" class="state-pill">Optional</span></div>
+              <label>Known distance (mm)<input id="calibrationDistanceInput" type="number" min="0.01" step="0.01" value="1"></label>
+              <div class="button-pair"><button id="startCalibrationButton" type="button">Draw reference line</button><button id="calibrateButton" class="secondary" type="button" disabled>Apply calibration</button></div>
+              <p id="calibrationStatus" class="hint">V-centering ratios work without calibration. Use this only when you need a physical scale.</p>
+            </section>
+            <section class="control-section"><div class="section-heading"><h3>Perspective correction</h3></div><div class="button-pair"><button id="cornerModeButton" type="button">Set corners</button><button id="applyPerspectiveButton" type="button">Flatten card</button></div><button id="originalButton" class="wide secondary" type="button">Restore original photo</button><label class="switch-row"><input id="standardRatioToggle" type="checkbox" checked><span><strong>Standard card ratio</strong><small>Use a 2.5 × 3.5 proportion</small></span></label></section>
+            <section class="control-section"><div class="section-heading"><h3>Measurement guides</h3></div><div class="button-pair"><button id="detectButton" type="button">Auto detect</button><button id="resetButton" class="secondary" type="button">Reset guides</button></div><label class="switch-row"><input id="snapToggle" type="checkbox" checked><span><strong>Snap to detected edges</strong><small>Use contrast as a starting point</small></span></label></section>
+            <section class="control-section measurements"><div class="section-heading"><h3>Live centering</h3><span class="state-pill active">Live</span></div><dl class="metrics"><div><dt>Left</dt><dd id="leftMetric">--</dd></div><div><dt>Right</dt><dd id="rightMetric">--</dd></div><div><dt>Top</dt><dd id="topMetric">--</dd></div><div><dt>Bottom</dt><dd id="bottomMetric">--</dd></div></dl><div class="score-row"><span>Left / Right</span><strong id="horizontalScore">--</strong></div><div class="meter"><span id="horizontalMeter"></span></div><div class="score-row"><span>Top / Bottom</span><strong id="verticalScore">--</strong></div><div class="meter"><span id="verticalMeter"></span></div><p id="gradeHint" class="hint">Open an image to begin.</p></section>
+            <section class="control-section"><label>Precision step<select id="stepControl"><option value="1">1 px</option><option value="2">2 px</option><option value="5" selected>5 px</option><option value="10">10 px</option></select></label><div class="nudge-grid" aria-label="Nudge printed area edges"><span>Left</span><button type="button" data-nudge-edge="left" data-nudge-direction="-1">−</button><button type="button" data-nudge-edge="left" data-nudge-direction="1">+</button><span>Right</span><button type="button" data-nudge-edge="right" data-nudge-direction="-1">−</button><button type="button" data-nudge-edge="right" data-nudge-direction="1">+</button><span>Top</span><button type="button" data-nudge-edge="top" data-nudge-direction="-1">−</button><button type="button" data-nudge-edge="top" data-nudge-direction="1">+</button><span>Bottom</span><button type="button" data-nudge-edge="bottom" data-nudge-direction="-1">−</button><button type="button" data-nudge-edge="bottom" data-nudge-direction="1">+</button></div></section>
           </div>
-          <button id="originalButton" class="wide-button secondary" type="button">Use Original Photo</button>
-          <label class="toggle-row">
-            <input id="standardRatioToggle" type="checkbox" checked>
-            <span>Flatten to standard card ratio</span>
-          </label>
-          <p id="modeHint" class="hint">For angled photos, set the four physical card corners first.</p>
-        </section>
 
-        <section class="panel-section">
-          <h2>Guides</h2>
-          <div class="control-row">
-            <button id="detectButton" type="button">Auto Detect</button>
-            <button id="resetButton" type="button">Reset Guides</button>
+          <div class="panel-view" data-panel-view="report" hidden>
+            <section class="drawer-intro"><span>Evidence</span><h2>Originals and observations</h2><p>Captures are grouped by workflow step. Change a capture's step below if needed.</p></section>
+            <section class="control-section"><label>Measurement summary<textarea id="reportText" readonly rows="7" placeholder="Centering measurements will appear here."></textarea></label><button id="copyButton" class="wide secondary" type="button">Copy summary</button><label>Inspector notes<textarea id="reportNoteText" rows="4" placeholder="Document observations and inspection context."></textarea></label></section>
+            <section class="control-section"><label>Current card side<select id="reportSideSelect"><option value="front" selected>Front</option><option value="back">Back</option></select></label><div class="button-pair"><button type="button" data-add-centering-side="front">Save front</button><button type="button" data-add-centering-side="back">Save back</button></div><label>Markup color<select id="markerColorSelect"><option value="#ff344f">TraceLock red</option><option value="#d7d7dc">Light grey</option><option value="#ffffff">White</option><option value="#111114">Black</option><option value="#f2c766">Amber</option><option value="#6694ff">Blue</option></select></label><button id="addCardImagesButton" class="wide secondary" type="button">Add current-side images</button><div id="reportEvidenceList" class="evidence-list" aria-label="Report evidence"></div></section>
+            <section class="control-section"><button id="exportReportButton" class="wide" type="button">Prepare inspection report</button><a id="reportDownloadLink" class="download-link" download="tracelock-inspection-report.html">Download inspection report</a></section>
           </div>
-          <label class="toggle-row">
-            <input id="snapToggle" type="checkbox" checked>
-            <span>Snap guides to detected edges</span>
-          </label>
-          <p class="hint">Drag the outer guide to the card edge, then drag the inner guide to the printed image or design window.</p>
-        </section>
 
-        <section class="panel-section">
-          <h2>Measurements</h2>
-          <dl class="metrics">
-            <div>
-              <dt>Left</dt>
-              <dd id="leftMetric">--</dd>
-            </div>
-            <div>
-              <dt>Right</dt>
-              <dd id="rightMetric">--</dd>
-            </div>
-            <div>
-              <dt>Top</dt>
-              <dd id="topMetric">--</dd>
-            </div>
-            <div>
-              <dt>Bottom</dt>
-              <dd id="bottomMetric">--</dd>
-            </div>
-          </dl>
-        </section>
-
-        <section class="panel-section">
-          <h2>Centering</h2>
-          <div class="score-row">
-            <span>Left / Right</span>
-            <strong id="horizontalScore">--</strong>
+          <div class="panel-view" data-panel-view="promote" hidden>
+            <section class="drawer-intro"><span>Output</span><h2>Presentation and video</h2><p>Presentation Mode is built for live recording. Video assembly remains available here.</p></section>
+            <section class="promo-preview-shell" aria-label="Promo video preview"><canvas id="promoPreviewCanvas" width="800" height="450"></canvas><span>Composition preview</span></section>
+            <section class="control-section"><div class="button-pair"><label class="file-action wide"><input id="promoImageInput" type="file" accept="image/*" multiple><span>Add other images</span></label><button id="addCurrentFrameButton" class="wide secondary" type="button">Add current view</button></div><div id="promoThumbs" class="snapshot-strip" aria-label="Output images"></div><p id="promoStatus" class="hint">Captured images appear here automatically. Remove anything you do not want in the final output.</p></section>
+            <section class="control-section"><label>Brand name<input id="promoBrandInput" type="text" value="TRACELOCK"></label><label>Headline<input id="promoTitleInput" type="text" value="Forensic Card Inspection"></label><label>Supporting line<input id="promoSubtitleInput" type="text" value="Evidence-led inspection for a more certain collecting world"></label><label>Call to action<input id="promoCtaInput" type="text" value="See what the surface reveals"></label><div class="field-grid"><label>Visual style<select id="promoStyleSelect"><option value="midnight" selected>TraceLock dark</option><option value="collector">Warm inspection</option><option value="clean">Laboratory white</option></select></label><label>Format<select id="promoFormatSelect"><option value="vertical">Vertical reel</option><option value="square">Square post</option><option value="wide" selected>Wide video</option></select></label></div><label>Scene duration<select id="promoDurationSelect"><option value="1.5">Quick · 1.5 seconds</option><option value="2" selected>Balanced · 2 seconds</option><option value="3">Detailed · 3 seconds</option></select></label></section>
+            <section class="control-section"><button id="generatePromoButton" class="wide" type="button">Render presentation video</button><a id="promoDownloadLink" class="download-link" download="tracelock-inspection-video.webm">Download presentation video</a></section>
           </div>
-          <div class="meter">
-            <span id="horizontalMeter"></span>
-          </div>
-          <div class="score-row">
-            <span>Top / Bottom</span>
-            <strong id="verticalScore">--</strong>
-          </div>
-          <div class="meter">
-            <span id="verticalMeter"></span>
-          </div>
-          <p id="gradeHint" class="grade-hint">Upload an image to begin.</p>
-        </section>
-
-        <section class="panel-section">
-          <h2>Nudge Printed Area</h2>
-          <label>
-            Step size
-            <select id="stepControl">
-              <option value="1">1 px</option>
-              <option value="2">2 px</option>
-              <option value="5" selected>5 px</option>
-              <option value="10">10 px</option>
-            </select>
-          </label>
-          <div class="nudge-grid" aria-label="Nudge printed area edges">
-            <span>Left edge</span>
-            <button type="button" data-nudge-edge="left" data-nudge-direction="-1">←</button>
-            <button type="button" data-nudge-edge="left" data-nudge-direction="1">→</button>
-            <span>Right edge</span>
-            <button type="button" data-nudge-edge="right" data-nudge-direction="-1">←</button>
-            <button type="button" data-nudge-edge="right" data-nudge-direction="1">→</button>
-            <span>Top edge</span>
-            <button type="button" data-nudge-edge="top" data-nudge-direction="-1">↑</button>
-            <button type="button" data-nudge-edge="top" data-nudge-direction="1">↓</button>
-            <span>Bottom edge</span>
-            <button type="button" data-nudge-edge="bottom" data-nudge-direction="-1">↑</button>
-            <button type="button" data-nudge-edge="bottom" data-nudge-direction="1">↓</button>
-          </div>
-          <p class="hint">Use these for exact edge movement after zooming in.</p>
-        </section>
-
-        <section class="panel-section">
-          <h2>Report</h2>
-          <textarea id="reportText" readonly rows="8" spellcheck="false"></textarea>
-          <button id="copyButton" type="button">Copy Report</button>
-        </section>
+        </div>
       </aside>
     </main>
 
-    <script src="app.js"></script>
-  </body>
+    <section class="evidence-dock" aria-label="Captured inspection evidence"><div class="dock-heading"><span>Recent captures</span><strong id="evidenceCount">0 report images</strong></div><div id="snapshotStrip" class="snapshot-strip" aria-label="Recent capture thumbnails"></div><div class="provenance-note"><strong>Originals preserved</strong><span>Annotations are stored as separate evidence views.</span></div></section>
+  </div>
+
+  <div id="markModal" class="mark-modal" hidden>
+    <div class="mark-dialog" role="dialog" aria-modal="true" aria-labelledby="markDialogTitle">
+      <div class="dialog-heading"><div><span>Evidence markup</span><h2 id="markDialogTitle">Document a visible observation</h2></div><button id="cancelMarkButton" class="secondary" type="button">Close</button></div>
+      <div class="mark-canvas-wrap"><canvas id="markCanvas" width="900" height="700" aria-label="Snapshot marking canvas"></canvas></div>
+      <div id="visionSuggestionsBar" class="vision-suggestions-bar" hidden>
+        <div class="vision-suggestions-head"><strong id="visionSuggestionsTitle">AI Suggestions (unverified)</strong><div class="vision-suggestions-actions"><button id="acceptAllSuggestionsButton" type="button">Accept all</button><button id="rejectAllSuggestionsButton" class="secondary" type="button">Reject all</button></div></div>
+        <div id="visionSuggestionsList" class="vision-suggestions-list"></div>
+      </div>
+      <div class="flaw-form-row"><label>Shape<select id="markupShapeSelect"><option value="rect" selected>Rectangle</option><option value="ellipse">Ellipse</option></select></label><label>Observation<select id="flawTypeSelect"><option value="Scratch">Scratch / Scuff</option><option value="Corner Ding">Corner ding / Wear</option><option value="Edge Whitening">Edge whitening / Chipping</option><option value="Crease">Crease / Dent</option><option value="Print Defect">Print defect</option><option value="Discoloration">Discoloration / Stain</option></select></label><label>Severity<select id="flawSeveritySelect"><option value="Light">Light / Minor</option><option value="Moderate" selected>Moderate</option><option value="Severe">Severe / Major</option></select></label><label>Details<input id="flawDetailsInput" type="text" placeholder="Example: 2 mm scratch on border"></label></div>
+      <div class="modal-control-row"><button id="runVisionOnMarkButton" class="secondary" type="button" hidden>Run Vision AI</button><button id="clearLastMarkButton" class="secondary" type="button">Undo last</button><button id="clearAllMarksButton" class="secondary" type="button">Clear marks</button><button id="saveMarkButton" type="button">Save annotated copy</button></div><p class="hint">The original remains unchanged. Each observation is numbered in the exported report.</p>
+    </div>
+  </div>
+  <div id="phoneTransferModal" class="mark-modal" hidden>
+    <div class="phone-transfer-dialog" role="dialog" aria-modal="true" aria-labelledby="phoneTransferTitle">
+      <div class="dialog-heading"><div><span>Local photo transfer</span><h2 id="phoneTransferTitle">Send a card photo from your iPhone</h2></div><button id="closePhoneTransferButton" class="secondary" type="button">Close</button></div>
+      <div class="phone-transfer-content">
+        <div class="phone-transfer-qr"><img id="phoneTransferQr" alt="QR code for the local TraceLock photo upload page"></div>
+        <div class="phone-transfer-copy"><strong>Scan with the iPhone Camera app</strong><p>Keep the iPhone and this computer on the same Wi-Fi network. Take or choose the full-card photo on the page that opens.</p><code id="phoneTransferUrl"></code><p id="phoneTransferStatus" class="phone-transfer-status">Waiting for a photo.</p><small>The image travels directly across your local network. It is not uploaded to the internet.</small></div>
+      </div>
+    </div>
+  </div>
+  <div id="snapshotModal" class="mark-modal" hidden>
+    <form id="snapshotForm" class="snapshot-dialog" role="dialog" aria-modal="true" aria-labelledby="snapshotDialogTitle">
+      <div class="dialog-heading"><div><span>Snapshot saved</span><h2 id="snapshotDialogTitle">Add snapshot to report</h2></div><button id="closeSnapshotModalButton" class="secondary" type="button">Close</button></div>
+      <div class="snapshot-dialog-preview"><img id="snapshotPreviewImage" alt="Saved microscope snapshot preview"></div>
+      <label>Annotation (optional)<input id="snapshotAnnotationInput" type="text" placeholder="Leave blank for no extra note"></label>
+      <div class="modal-control-row"><button id="skipSnapshotReportButton" class="secondary" type="button">Skip report</button><button id="confirmSnapshotReportButton" type="submit">Add to report</button></div>
+      <p class="hint">Saved to Recent captures below. Press Enter to add it to the report.</p>
+    </form>
+  </div>
+  <div id="sessionsModal" class="mark-modal" hidden>
+    <div class="sessions-dialog" role="dialog" aria-modal="true" aria-labelledby="sessionsDialogTitle">
+      <div class="dialog-heading"><div><span>Disk-backed storage</span><h2 id="sessionsDialogTitle">Saved inspection sessions</h2></div><button id="closeSessionsModalButton" class="secondary" type="button">Close</button></div>
+      <p id="sessionsModalStatus" class="hint">Each session stores full-resolution PNGs, a lightweight manifest.json, and YOLO-ready label files on disk.</p>
+      <div id="sessionsList" class="sessions-list" aria-label="Saved sessions"></div>
+      <div class="modal-control-row"><button id="openSessionsRootButton" class="secondary" type="button">Open sessions folder</button><button id="refreshSessionsButton" type="button">Refresh list</button></div>
+    </div>
+  </div>
+  <script src="gpu-filters.js?v=1"></script>
+  <script src="app.js?v=30"></script>
+</body>
 </html>
